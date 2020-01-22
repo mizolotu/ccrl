@@ -28,8 +28,8 @@ def nature_cnn(input_shape, **conv_kwargs):
     network = tf.keras.Model(inputs=[x_input], outputs=[h3])
     return network
 
-@register("mlp2small")
-def mlp2small(num_layers=2, num_hidden=64, activation=tf.tanh):
+@register("mlp2_64")
+def mlp2_64(num_layers=2, num_hidden=64, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -41,8 +41,8 @@ def mlp2small(num_layers=2, num_hidden=64, activation=tf.tanh):
         return network
     return network_fn
 
-@register("mlp2medium")
-def mlp2medium(num_layers=2, num_hidden=256, activation=tf.tanh):
+@register("mlp2_256")
+def mlp2_256(num_layers=2, num_hidden=256, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -54,8 +54,8 @@ def mlp2medium(num_layers=2, num_hidden=256, activation=tf.tanh):
         return network
     return network_fn
 
-@register("mlp2big")
-def mlp2big(num_layers=2, num_hidden=1024, activation=tf.tanh):
+@register("mlp2_1024")
+def mlp2_1024(num_layers=2, num_hidden=1024, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -67,8 +67,8 @@ def mlp2big(num_layers=2, num_hidden=1024, activation=tf.tanh):
         return network
     return network_fn
 
-@register("mlp3small")
-def mlp3small(num_layers=3, num_hidden=64, activation=tf.tanh):
+@register("mlp3_64")
+def mlp3_64(num_layers=3, num_hidden=64, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -80,8 +80,8 @@ def mlp3small(num_layers=3, num_hidden=64, activation=tf.tanh):
         return network
     return network_fn
 
-@register("mlp3medium")
-def mlp3medium(num_layers=3, num_hidden=256, activation=tf.tanh):
+@register("mlp3_256")
+def mlp3_256(num_layers=3, num_hidden=256, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -93,8 +93,8 @@ def mlp3medium(num_layers=3, num_hidden=256, activation=tf.tanh):
         return network
     return network_fn
 
-@register("mlp3big")
-def mlp3big(num_layers=3, num_hidden=1024, activation=tf.tanh):
+@register("mlp3_1024")
+def mlp3_1024(num_layers=3, num_hidden=1024, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
@@ -106,7 +106,7 @@ def mlp3big(num_layers=3, num_hidden=1024, activation=tf.tanh):
         return network
     return network_fn
 
-@register("cnn4small")
+@register("cnn2_64")
 def cnn4small(nh=64, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
@@ -117,7 +117,7 @@ def cnn4small(nh=64, **conv_kwargs):
         return network
     return network_fn
 
-@register("cnn4medium")
+@register("cnn2_256")
 def cnn4medium(nh=256, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
@@ -128,7 +128,30 @@ def cnn4medium(nh=256, **conv_kwargs):
         return network
     return network_fn
 
-@register("cnn8medium")
+@register("cnn2_1024")
+def cnn4medium(nh=1024, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        h = tf.keras.layers.Conv1D(filters=nh, kernel_size=4, activation='relu')(x_input)
+        h = tf.keras.layers.Flatten()(h)
+        h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
+        network = tf.keras.Model(inputs=[x_input], outputs=[h])
+        return network
+    return network_fn
+
+@register("cnn3_64")
+def cnn4medium(nh=64, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        h = tf.keras.layers.Conv1D(filters=nh, kernel_size=4, activation='relu')(x_input)
+        h = tf.keras.layers.Conv1D(filters=nh, kernel_size=4, activation='relu')(h)
+        h = tf.keras.layers.Flatten()(h)
+        h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
+        network = tf.keras.Model(inputs=[x_input], outputs=[h])
+        return network
+    return network_fn
+
+@register("cnn3_256")
 def cnn4medium(nh=256, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
@@ -140,7 +163,7 @@ def cnn4medium(nh=256, **conv_kwargs):
         return network
     return network_fn
 
-@register("cnn8big")
+@register("cnn3_1024")
 def cnn4big(nh=1024, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
@@ -152,16 +175,26 @@ def cnn4big(nh=1024, **conv_kwargs):
         return network
     return network_fn
 
-@register("lstm1small")
-def lstm1small(nh=64, **conv_kwargs):
+@register("slstm_64")
+def slstm_64(nh=64, **conv_kwargs):
     def network_fn(input_shape):
-        print(input_shape)
         x_input = tf.keras.Input(shape=input_shape)
         x_reshaped = tf.keras.layers.Reshape((1, *input_shape))(x_input)
         state_h = tf.keras.Input(shape=(nh,))
         state_c = tf.keras.Input(shape=(nh,))
         out, h, c = tf.keras.layers.LSTM(nh, return_state=True)(x_reshaped, initial_state=[state_h, state_c])
-        #out, h, c = tf.keras.layers.LSTM(nh, return_state=True)(x_reshaped)
+        network = tf.keras.Model(inputs=[x_input, state_h, state_c], outputs=[out, h, c])
+        return network
+    return network_fn
+
+@register("slstm_256")
+def slstm_256(nh=256, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        x_reshaped = tf.keras.layers.Reshape((1, *input_shape))(x_input)
+        state_h = tf.keras.Input(shape=(nh,))
+        state_c = tf.keras.Input(shape=(nh,))
+        out, h, c = tf.keras.layers.LSTM(nh, return_state=True)(x_reshaped, initial_state=[state_h, state_c])
         network = tf.keras.Model(inputs=[x_input, state_h, state_c], outputs=[out, h, c])
         return network
     return network_fn

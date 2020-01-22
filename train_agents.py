@@ -65,17 +65,22 @@ if __name__ == '__main__':
     ]
 
     networks = [
-        'mlp2small',
-        'mlp2medium',
-        'mlp2big',
-        'mlp3small',
-        'mlp3medium',
-        'mlp3big',
-        'cnn4small',
-        'cnn4medium',
-        'cnn8medium',
-        'cnn8big',
-        'lstm1small'
+        'mlp2_64',
+        'mlp2_256',
+        'mlp2_1024',
+        'mlp3_64',
+        'mlp3_256',
+        'mlp3_1024',
+        'cnn2_64',
+        'cnn2_256',
+        'cnn2_1024',
+        'cnn3_64',
+        'cnn3_256',
+        'cnn3_1024',
+        'lstm1_64',
+        'lstm1_256',
+        'slstm_64',
+        'slstm_256'
     ]
 
     n_envs = int(sys.argv[1])
@@ -86,6 +91,6 @@ if __name__ == '__main__':
     print('Total time steps: {0}'.format(total_timesteps))
 
     for network in networks:
-        if 'lstm' in network:
+        if 'small' in network:
             print(network)
             test_alg_on_env(env_classes[0], algorithms[3], network, ne=n_envs, ns=n_steps, tt=total_timesteps)

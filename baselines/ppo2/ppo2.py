@@ -150,9 +150,6 @@ def learn(*, network, env, total_timesteps,
     nupdates = total_timesteps//nbatch
     for update in range(1, nupdates+1):
 
-        #print('{0}->'.format(update % log_interval), end='')
-        print(update)
-
         assert nbatch % nminibatches == 0
         # Start timer
         tstart = time.perf_counter()
@@ -165,6 +162,7 @@ def learn(*, network, env, total_timesteps,
 
         # Get minibatch
         obs, returns, masks, actions, values, neglogpacs, states_h, states_c, epinfos = runner.run() #pylint: disable=E0632
+        trunner = time.perf_counter()
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
 
@@ -186,7 +184,6 @@ def learn(*, network, env, total_timesteps,
                     end = start + nbatch_train
                     mbinds = inds[start:end]
                     slices = (tf.constant(arr[mbinds]) for arr in (obs, returns, masks, actions, values, neglogpacs))
-                    print('training')
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices))
         else: # recurrent version
             inds = np.arange(nbatch)
@@ -206,6 +203,7 @@ def learn(*, network, env, total_timesteps,
         lossvals = np.mean(mblossvals, axis=0)
         # End timer
         tnow = time.perf_counter()
+        print(update, trunner - tstart, tnow - trunner, tnow - tstart)
         # Calculate the fps (frame per second)
         fps = int(nbatch / (tnow - tstart))
         if update % log_interval == 0 or update == 1:
@@ -226,12 +224,10 @@ def learn(*, network, env, total_timesteps,
             for (lossval, lossname) in zip(lossvals, model.loss_names):
                 logger.logkv('loss/' + lossname, lossval)
             logger.dumpkvs()
-            print('')
 
             # save model
 
             checkpoint_manager.save()
-            #checkpoint.save(file_prefix=checkpoint_prefix)
 
     return model
 # Avoid division error when calculate the mean (in our case if epinfo is empty returns np.nan, not return an error)
