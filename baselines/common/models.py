@@ -110,9 +110,10 @@ def mlp3big(num_layers=3, num_hidden=1024, activation=tf.tanh):
 def cnn4small(nh=32, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
-        conv1 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, kernel_initializer=ortho_init(np.sqrt(2)), activation='relu')(x_input)
-        conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, kernel_initializer=ortho_init(np.sqrt(2)), activation='relu')(conv1)
-        h = tf.keras.layers.Flatten()(conv2)
+        conv1 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, activation='relu')(x_input)
+        conv1 = tf.keras.layers.MaxPool1D(pool_size=2)(conv1)
+        #conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, kernel_initializer=ortho_init(np.sqrt(2)), activation='relu')(conv1)
+        h = tf.keras.layers.Flatten()(conv1)
         h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
         network = tf.keras.Model(inputs=[x_input], outputs=[h])
         return network
