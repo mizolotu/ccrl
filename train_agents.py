@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     n_envs = 4
     n_steps = 125
-    n_episodes = sys.argv[1]
+    n_episodes = int(sys.argv[1])
     total_timesteps = n_episodes * n_steps * n_envs
     print('Total time steps: {0}'.format(total_timesteps))
 
