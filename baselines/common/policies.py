@@ -31,13 +31,20 @@ class PolicyWithValue(tf.Module):
         self.initial_state = None
 
         # Based on the action space, will select what probability distribution type
-        self.pdtype = make_pdtype(policy_network.output_shape, ac_space, init_scale=0.01)
+
+        if type(policy_network.output_shape)==list and len(policy_network.output_shape) == 3:
+            self.pdtype = make_pdtype(policy_network.output_shape[0], ac_space, init_scale=0.01)
+        else:
+            self.pdtype = make_pdtype(policy_network.output_shape, ac_space, init_scale=0.01)
 
         if estimate_q:
             assert isinstance(ac_space, gym.spaces.Discrete)
             self.value_fc = fc(self.value_network.output_shape, 'q', ac_space.n)
         else:
-            self.value_fc = fc(self.value_network.output_shape, 'vf', 1)
+            if type(policy_network.output_shape) == list and len(policy_network.output_shape) == 3:
+                self.value_fc = fc(self.value_network.output_shape[0], 'vf', 1)
+            else:
+                self.value_fc = fc(self.value_network.output_shape, 'vf', 1)
 
     @tf.function
     def step(self, observation):

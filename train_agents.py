@@ -75,9 +75,10 @@ if __name__ == '__main__':
         'cnn4medium',
         'cnn8medium',
         'cnn8big',
+        'lstm1small'
     ]
 
-    n_envs = 16
+    n_envs = 64
     n_steps = 125
     n_episodes = int(sys.argv[1])
     total_timesteps = n_episodes * n_steps * n_envs
