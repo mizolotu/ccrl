@@ -46,6 +46,9 @@ def test_alg_on_env(env_class, algorithm, network, ne, ns, tt, ld='log'):
 
 if __name__ == '__main__':
 
+    if 'cpu' in sys.argv[1:]:
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
     env_classes = [
         PendulumEnv,
         Continuous_MountainCarEnv,
