@@ -7,6 +7,8 @@ def ortho_init(scale=1.0):
         shape = tuple(shape)
         if len(shape) == 2:
             flat_shape = shape
+        elif len(shape) == 3: # assumes NHWC
+            flat_shape = (np.prod(shape[:-1]), shape[-1])
         elif len(shape) == 4: # assumes NHWC
             flat_shape = (np.prod(shape[:-1]), shape[-1])
         else:

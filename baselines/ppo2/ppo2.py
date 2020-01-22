@@ -127,10 +127,11 @@ def learn(*, network, env, total_timesteps,
     checkpoint = tf.train.Checkpoint(model=model)
     checkpoint_manager = tf.train.CheckpointManager(checkpoint, directory=checkpoint_directory, max_to_keep=1)
 
+
     try:
-        #status = checkpoint.restore(tf.train.latest_checkpoint(checkpoint_directory))
-        status = checkpoint.restore(checkpoint_manager.latest_checkpoint)
-        status.assert_consumed()
+        pass
+        #status = checkpoint.restore(checkpoint_manager.latest_checkpoint)
+        #status.assert_consumed()
     except Exception as e:
         print(e)
 
