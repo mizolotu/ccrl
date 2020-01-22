@@ -6,7 +6,6 @@ from baselines.common.atari_wrappers import FrameStack
 
 def worker(remote, parent_remote, env_fn_wrapper):
     parent_remote.close()
-    print(env_fn_wrapper.x)
     env = env_fn_wrapper.x()
     try:
         while True:

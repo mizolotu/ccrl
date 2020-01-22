@@ -22,9 +22,10 @@ class PendulumEnv(gym.Env):
         self.viewer = None
         if stack is not None:
             self.frames = deque(maxlen=stack)
+            high = np.ones((stack, 1)) * np.array([1., 1., self.max_speed])
         else:
             self.frames = None
-        high = np.ones((stack, 1)) * np.array([1., 1., self.max_speed])
+            high = np.array([1., 1., self.max_speed])
         self.action_space = spaces.Box(low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32)
         if stack is not None:
             self.observation_space = spaces.Box(low=-high, high=high, dtype=np.float32)

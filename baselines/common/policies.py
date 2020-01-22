@@ -24,6 +24,7 @@ class PolicyWithValue(tf.Module):
 
         """
 
+        print(policy_network.summary())
         self.policy_network = policy_network
         self.value_network = value_network or policy_network
         self.estimate_q = estimate_q
