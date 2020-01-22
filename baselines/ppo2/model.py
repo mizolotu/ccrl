@@ -70,12 +70,12 @@ class Model(tf.Module):
             neglogpac = pd.neglogp(actions)
             entropy = tf.reduce_mean(pd.entropy())
             if states_h is not None and states_c is not None:
-                print(type(obs), type(states_h), type(states_c))
-                print(states_h, states_c)
+                #print(type(obs), type(states_h), type(states_c))
+                #print(states_h, states_c)
                 vpred = self.train_model.value(obs, [states_h, states_c])
             else:
-                print(type(obs), type(states_h), type(states_c))
-                print(states_h, states_c)
+                #print(type(obs), type(states_h), type(states_c))
+                #print(states_h, states_c)
                 vpred = self.train_model.value(obs)
             vpredclipped = values + tf.clip_by_value(vpred - values, -cliprange, cliprange)
             vf_losses1 = tf.square(vpred - returns)

@@ -150,7 +150,8 @@ def learn(*, network, env, total_timesteps,
     nupdates = total_timesteps//nbatch
     for update in range(1, nupdates+1):
 
-        print('{0}->'.format(update % log_interval), end='')
+        #print('{0}->'.format(update % log_interval), end='')
+        print(update)
 
         assert nbatch % nminibatches == 0
         # Start timer
