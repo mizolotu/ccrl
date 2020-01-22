@@ -68,6 +68,7 @@ class PendulumEnv(gym.Env):
     def _get_obs(self):
         theta, thetadot = self.state
         if self.frames is not None:
+            self.frames.append([np.cos(theta), np.sin(theta), thetadot])
             while len(self.frames) < self.frames.maxlen:
                 self.frames.append([np.cos(theta), np.sin(theta), thetadot])
             obs = np.array([x for x in self.frames])
