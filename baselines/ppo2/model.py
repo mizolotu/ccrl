@@ -38,9 +38,8 @@ class Model(tf.Module):
         if MPI is not None:
           sync_from_root(self.variables)
 
-    def train(self, lr, cliprange, obs, returns, masks, actions, values, neglogpac_old, states=None):
-        grads, pg_loss, vf_loss, entropy, approxkl, clipfrac = self.get_grad(
-            cliprange, obs, returns, masks, actions, values, neglogpac_old)
+    def train(self, lr, cliprange, obs, returns, masks, actions, values, neglogpac_old, states_h=None, states_c=None):
+        grads, pg_loss, vf_loss, entropy, approxkl, clipfrac = self.get_grad(cliprange, obs, returns, masks, actions, values, neglogpac_old, states_h, states_c)
         if MPI is not None:
             self.optimizer.apply_gradients(grads, lr)
         else:
@@ -52,7 +51,7 @@ class Model(tf.Module):
 
 
     @tf.function
-    def get_grad(self, cliprange, obs, returns, masks, actions, values, neglogpac_old):
+    def get_grad(self, cliprange, obs, returns, masks, actions, values, neglogpac_old, states_h=None, states_c=None):
         # Here we calculate advantage A(s,a) = R + yV(s') - V(s)
         # Returns = R + yV(s')
         advs = returns - values
@@ -63,11 +62,21 @@ class Model(tf.Module):
         advs = (advs - tf.reduce_mean(advs)) / (tf.keras.backend.std(advs) + 1e-8)
 
         with tf.GradientTape() as tape:
-            policy_latent = self.train_model.policy_network(obs)
+            if states_h is not None and states_c is not None:
+                policy_latent, _, _ = self.train_model.policy_network([obs, states_h, states_c])
+            else:
+                policy_latent = self.train_model.policy_network(obs)
             pd, _ = self.train_model.pdtype.pdfromlatent(policy_latent)
             neglogpac = pd.neglogp(actions)
             entropy = tf.reduce_mean(pd.entropy())
-            vpred = self.train_model.value(obs)
+            if states_h is not None and states_c is not None:
+                print(type(obs), type(states_h), type(states_c))
+                print(states_h, states_c)
+                vpred = self.train_model.value(obs, [states_h, states_c])
+            else:
+                print(type(obs), type(states_h), type(states_c))
+                print(states_h, states_c)
+                vpred = self.train_model.value(obs)
             vpredclipped = values + tf.clip_by_value(vpred - values, -cliprange, cliprange)
             vf_losses1 = tf.square(vpred - returns)
             vf_losses2 = tf.square(vpredclipped - returns)

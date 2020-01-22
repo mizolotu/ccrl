@@ -10,7 +10,11 @@ class AbstractEnvRunner(ABC):
         self.obs = np.zeros((nenv,) + env.observation_space.shape, dtype=env.observation_space.dtype.name)
         self.obs[:] = env.reset()
         self.nsteps = nsteps
-        self.states = model.initial_state
+        self.state_dim = model.initial_state
+        if self.state_dim is not None:
+            self.states = [np.zeros((nenv, self.state_dim)), np.zeros((nenv, self.state_dim))]
+        else:
+            self.states = None
         self.dones = [False for _ in range(nenv)]
 
     @abstractmethod

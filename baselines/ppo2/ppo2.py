@@ -160,7 +160,7 @@ def learn(*, network, env, total_timesteps,
         if update % log_interval == 0 and is_mpi_root: logger.info('Stepping environment...')
 
         # Get minibatch
-        obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run() #pylint: disable=E0632
+        obs, returns, masks, actions, values, neglogpacs, states_h, states_c, epinfos = runner.run() #pylint: disable=E0632
         if eval_env is not None:
             eval_obs, eval_returns, eval_masks, eval_actions, eval_values, eval_neglogpacs, eval_states, eval_epinfos = eval_runner.run() #pylint: disable=E0632
 
@@ -170,7 +170,7 @@ def learn(*, network, env, total_timesteps,
 
         # Here what we're going to do is for each minibatch calculate the loss and append it.
         mblossvals = []
-        if states is None: # nonrecurrent version
+        if states_h is None and states_c is None: # nonrecurrent version
             # Index of each element of batch_size
             # Create the indices array
             inds = np.arange(nbatch)
@@ -182,9 +182,21 @@ def learn(*, network, env, total_timesteps,
                     end = start + nbatch_train
                     mbinds = inds[start:end]
                     slices = (tf.constant(arr[mbinds]) for arr in (obs, returns, masks, actions, values, neglogpacs))
+                    print('training')
                     mblossvals.append(model.train(lrnow, cliprangenow, *slices))
         else: # recurrent version
-            raise ValueError('Not Support Yet')
+            inds = np.arange(nbatch)
+            for _ in range(noptepochs):
+                # Randomize the indexes
+                np.random.shuffle(inds)
+                # 0 to batch_size with batch_train_size step
+                for start in range(0, nbatch, nbatch_train):
+                    end = start + nbatch_train
+                    mbinds = inds[start:end]
+                    slices = (tf.constant(arr[mbinds]) for arr in (obs, returns, masks, actions, values, neglogpacs))
+                    states_h_slice = states_h[mbinds]
+                    states_c_slice = states_c[mbinds]
+                    mblossvals.append(model.train(lrnow, cliprangenow, *slices, states_h_slice, states_c_slice))
 
         # Feedforward --> get losses --> update
         lossvals = np.mean(mblossvals, axis=0)

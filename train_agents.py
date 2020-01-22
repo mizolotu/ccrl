@@ -78,13 +78,14 @@ if __name__ == '__main__':
         'lstm1small'
     ]
 
-    n_envs = 64
+    n_envs = int(sys.argv[1])
+    n_episodes = int(sys.argv[2])
+
     n_steps = 125
-    n_episodes = int(sys.argv[1])
     total_timesteps = n_episodes * n_steps * n_envs
     print('Total time steps: {0}'.format(total_timesteps))
 
     for network in networks:
-        if 'cnn' in network:
+        if 'lstm' in network:
             print(network)
             test_alg_on_env(env_classes[0], algorithms[3], network, ne=n_envs, ns=n_steps, tt=total_timesteps)
