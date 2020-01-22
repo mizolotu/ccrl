@@ -27,7 +27,6 @@ def learn(*, network, env, total_timesteps,
     gamma=0.99,
     lam=0.95,
     log_interval=10,
-    nminibatches=4,
     noptepochs=4,
     cliprange=0.2,
     model_fn=None,
@@ -99,6 +98,7 @@ def learn(*, network, env, total_timesteps,
 
     # Get the nb of env
     nenvs = env.num_envs
+    nminibatches = nenvs
 
     # Get state_space and action_space
     ob_space = env.observation_space
