@@ -84,6 +84,6 @@ if __name__ == '__main__':
     print('Total time steps: {0}'.format(total_timesteps))
 
     for network in networks:
-        if 'cnn' in network:
+        if 'mlp' in network:
             print(network)
             test_alg_on_env(env_classes[0], algorithms[3], network, ne=n_envs, ns=n_steps, tt=total_timesteps)
