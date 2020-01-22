@@ -33,8 +33,8 @@ def mlp2small(num_layers=2, num_hidden=64, activation=tf.tanh):
     def network_fn(input_shape):
         print('input shape is {}'.format(input_shape))
         x_input = tf.keras.Input(shape=input_shape)
-        h = tf.keras.layers.Flatten()(x_input)
-        #h = x_input
+        #h = tf.keras.layers.Flatten()(x_input)
+        h = x_input
         for i in range(num_layers):
             h = tf.keras.layers.Dense(units=num_hidden, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc{}'.format(i), activation=activation)(h)
         network = tf.keras.Model(inputs=[x_input], outputs=[h])
@@ -111,9 +111,8 @@ def cnn4small(nh=32, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
         conv1 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, activation='relu')(x_input)
-        conv1 = tf.keras.layers.MaxPool1D(pool_size=2)(conv1)
-        #conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, kernel_initializer=ortho_init(np.sqrt(2)), activation='relu')(conv1)
-        h = tf.keras.layers.Flatten()(conv1)
+        conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, activation='relu')(conv1)
+        h = tf.keras.layers.Flatten()(conv2)
         h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
         network = tf.keras.Model(inputs=[x_input], outputs=[h])
         return network
