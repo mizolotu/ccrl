@@ -149,6 +149,9 @@ def learn(*, network, env, total_timesteps,
 
     nupdates = total_timesteps//nbatch
     for update in range(1, nupdates+1):
+
+        print(update % log_interval + '->', end='')
+
         assert nbatch % nminibatches == 0
         # Start timer
         tstart = time.perf_counter()
@@ -222,6 +225,7 @@ def learn(*, network, env, total_timesteps,
             for (lossval, lossname) in zip(lossvals, model.loss_names):
                 logger.logkv('loss/' + lossname, lossval)
             logger.dumpkvs()
+            print('')
 
             # save model
 
