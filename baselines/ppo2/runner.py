@@ -31,8 +31,6 @@ class Runner(AbstractEnvRunner):
             # Given observations, get action value and neglopacs
             # We already have self.obs because Runner superclass run self.obs[:] = env.reset() on init
             obs = tf.constant(self.obs)
-            print(obs.shape)
-            print(self.states)
             actions, values, self.states, neglogpacs = self.model.step(obs)
             actions = actions._numpy()
             mb_obs.append(self.obs.copy())
