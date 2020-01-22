@@ -107,24 +107,22 @@ def mlp3big(num_layers=3, num_hidden=1024, activation=tf.tanh):
     return network_fn
 
 @register("cnn4small")
-def cnn4small(nh=32, **conv_kwargs):
+def cnn4small(nh=64, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
-        conv1 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, activation='relu')(x_input)
-        conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, activation='relu')(conv1)
-        h = tf.keras.layers.Flatten()(conv2)
+        h = tf.keras.layers.Conv1D(filters=nh, kernel_size=4, activation='relu')(x_input)
+        h = tf.keras.layers.Flatten()(h)
         h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
         network = tf.keras.Model(inputs=[x_input], outputs=[h])
         return network
     return network_fn
 
 @register("cnn4medium")
-def cnn4medium(nh=64, **conv_kwargs):
+def cnn4medium(nh=256, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
-        conv1 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, strides=2, activation='relu')(x_input)
-        conv2 = tf.keras.layers.Conv1D(filters=nh, kernel_size=2, strides=2, activation='relu')(conv1)
-        h = tf.keras.layers.Flatten()(conv2)
+        h = tf.keras.layers.Conv1D(filters=nh, kernel_size=4, activation='relu')(x_input)
+        h = tf.keras.layers.Flatten()(h)
         h = tf.keras.layers.Dense(units=nh, kernel_initializer=ortho_init(np.sqrt(2)), name='mlp_fc0', activation=tf.tanh)(h)
         network = tf.keras.Model(inputs=[x_input], outputs=[h])
         return network
