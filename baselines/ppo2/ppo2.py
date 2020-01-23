@@ -19,7 +19,8 @@ def constfn(val):
 
 def learn(*, network, env, total_timesteps,
     eval_env = None,
-    seed=None, nsteps=2048,
+    seed=None,
+    nsteps=2048,
     ent_coef=0.0,
     lr=lambda f:1e-3*f,
     vf_coef=0.5,

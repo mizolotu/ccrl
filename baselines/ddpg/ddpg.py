@@ -19,38 +19,39 @@ try:
 except ImportError:
     MPI = None
 
-def learn(network, env,
-          seed=None,
-          total_timesteps=None,
-          nb_epochs=None, # with default settings, perform 1M steps total
-          nb_epoch_cycles=20,
-          nb_rollout_steps=100,
-          reward_scale=1.0,
-          render=False,
-          render_eval=False,
-          noise_type='adaptive-param_0.2',
-          normalize_returns=False,
-          normalize_observations=True,
-          critic_l2_reg=1e-2,
-          actor_lr=1e-4,
-          critic_lr=1e-3,
-          popart=False,
-          gamma=0.99,
-          clip_norm=None,
-          nb_train_steps=50, # per epoch cycle and MPI worker,
-          nb_eval_steps=100,
-          batch_size=64, # per MPI worker
-          tau=0.01,
-          eval_env=None,
-          param_noise_adaption_interval=50,
-          load_path=None,
-          **network_kwargs):
+def learn(network, env, total_timesteps,
+    nsteps,
+    seed=None,
+    nb_epoch_cycles=20,
+    nb_rollout_steps=100,
+    reward_scale=1.0,
+    render=False,
+    render_eval=False,
+    noise_type='adaptive-param_0.2',
+    normalize_returns=False,
+    normalize_observations=True,
+    critic_l2_reg=1e-2,
+    actor_lr=1e-4,
+    critic_lr=1e-3,
+    popart=False,
+    gamma=0.99,
+    clip_norm=None,
+    nb_train_steps=50, # per epoch cycle and MPI worker,
+    nb_eval_steps=100,
+    tau=0.01,
+    log_interval=None,
+    eval_env=None,
+    param_noise_adaption_interval=50,
+    load_path=None,
+    **network_kwargs
+):
 
     set_global_seeds(seed)
+    batch_size = nsteps
+    nenvs = env.num_envs
 
     if total_timesteps is not None:
-        assert nb_epochs is None
-        nb_epochs = int(total_timesteps) // (nb_epoch_cycles * nb_rollout_steps)
+        nb_epoch_cycles = log_interval
     else:
         nb_epochs = 500
 
@@ -111,19 +112,14 @@ def learn(network, env,
 
     agent.reset()
 
-    obs = env.reset()
+
     if eval_env is not None:
         eval_obs = eval_env.reset()
-    nenvs = obs.shape[0]
 
     episode_reward = np.zeros(nenvs, dtype = np.float32) #vector
     episode_step = np.zeros(nenvs, dtype = int) # vector
     episodes = 0 #scalar
     t = 0 # scalar
-
-    epoch = 0
-
-
 
     start_time = time.time()
 
@@ -132,8 +128,9 @@ def learn(network, env,
     epoch_actions = []
     epoch_qs = []
     epoch_episodes = 0
-    for epoch in range(nb_epochs):
+    for epoch in range(100):
         for cycle in range(nb_epoch_cycles):
+            obs = env.reset()
             # Perform rollouts.
             if nenvs > 1:
                 # if simulating multiple envs in parallel, impossible to reset agent at the end of the episode in each
@@ -177,7 +174,6 @@ def learn(network, env,
                         episodes += 1
                         if nenvs == 1:
                             agent.reset()
-
 
             # Train.
             epoch_actor_losses = []

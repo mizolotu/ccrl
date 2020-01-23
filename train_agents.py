@@ -63,9 +63,7 @@ if __name__ == '__main__':
 
     algorithms = [
         {'name': 'ddpg', 'learn': learn_ddpg},
-        {'name': 'a2c', 'learn': learn_a2c},
-        {'name': 'trpo', 'learn': learn_trpo},
-        {'name': 'ppo', 'learn': learn_ppo},
+        {'name': 'ppo', 'learn': learn_ppo}
     ]
 
     networks = [
@@ -100,4 +98,4 @@ if __name__ == '__main__':
     for network in networks:
         if '' in network:
             print(network)
-            test_alg_on_env(env_classes[0], algorithms[3], network, ne=n_envs, ns=n_steps, tt=total_timesteps)
+            test_alg_on_env(env_classes[0], algorithms[0], network, ne=n_envs, ns=n_steps, tt=total_timesteps)
