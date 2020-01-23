@@ -238,7 +238,8 @@ def alstm_64(nh=64, **conv_kwargs):
         x_input = tf.keras.Input(shape=input_shape)
         out = tf.keras.layers.LSTM(nh, return_sequences=True)(x_input)
         out = tf.keras.layers.Attention()([out, out])
-        out = tf.keras.layers.Flatten()(out)
+        #out = tf.keras.layers.Flatten()(out)
+        out = tf.reduce_mean(out, axis=1)
         network = tf.keras.Model(inputs=[x_input], outputs=[out])
         return network
     return network_fn
