@@ -236,10 +236,12 @@ def lstm2_1024(nh=1024, **conv_kwargs):
 def alstm_64(nh=64, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
-        out = tf.keras.layers.LSTM(nh, return_sequences=True)(x_input)
-        out = tf.keras.layers.Attention()([out, out])
-        #out = tf.keras.layers.Flatten()(out)
-        out = tf.reduce_mean(out, axis=1)
+        out, h, c = tf.keras.layers.LSTM(nh, return_state=True, return_sequences=True)(x_input)
+        ht = tf.expand_dims(h, 1)
+        score = tf.nn.tanh(tf.keras.layers.Dense(nh)(out) + tf.keras.layers.Dense(nh)(ht))
+        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(nh)(score), axis=1)
+        out = attention_weights * out
+        out = tf.reduce_sum(out, axis=1)
         network = tf.keras.Model(inputs=[x_input], outputs=[out])
         return network
     return network_fn
