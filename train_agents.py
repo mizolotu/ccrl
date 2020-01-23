@@ -34,7 +34,7 @@ def clean_dir(dir_name):
 
 def test_alg_on_env(env_class, algorithm, network, ne, ns, tt, ld='log'):
     if 'cnn' in network or 'lstm' in network:
-        k = 4
+        k = 8
         env_fns = [make_env(env_class, k) for _ in range(ne)]
     else:
         env_fns = [make_env(env_class) for _ in range(ne)]
