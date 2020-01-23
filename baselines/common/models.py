@@ -239,7 +239,21 @@ def alstm_64(nh=64, **conv_kwargs):
         out, h, c = tf.keras.layers.LSTM(nh, return_state=True, return_sequences=True)(x_input)
         ht = tf.expand_dims(h, 1)
         score = tf.nn.tanh(tf.keras.layers.Dense(nh)(out) + tf.keras.layers.Dense(nh)(ht))
-        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(nh)(score), axis=1)
+        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(1)(score), axis=1)
+        out = attention_weights * out
+        out = tf.reduce_sum(out, axis=1)
+        network = tf.keras.Model(inputs=[x_input], outputs=[out])
+        return network
+    return network_fn
+
+@register("alstm_256")
+def alstm_256(nh=256, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        out, h, c = tf.keras.layers.LSTM(nh, return_state=True, return_sequences=True)(x_input)
+        ht = tf.expand_dims(h, 1)
+        score = tf.nn.tanh(tf.keras.layers.Dense(nh)(out) + tf.keras.layers.Dense(nh)(ht))
+        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(1)(score), axis=1)
         out = attention_weights * out
         out = tf.reduce_sum(out, axis=1)
         network = tf.keras.Model(inputs=[x_input], outputs=[out])
@@ -264,11 +278,32 @@ def blstm_256(nh=256, **conv_kwargs):
         return network
     return network_fn
 
-@register("blstm_1024")
-def blstm_1024(nh=1024, **conv_kwargs):
+@register("ablstm_64")
+def ablstm_64(nh=64, **conv_kwargs):
     def network_fn(input_shape):
         x_input = tf.keras.Input(shape=input_shape)
-        out, fh, fc, bh, bc = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(nh, return_state=True))(x_input)
+        out, fh, fc, bh, bc = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(nh, return_state=True, return_sequences=True))(x_input)
+        h = tf.keras.layers.Concatenate()([fh, bh])
+        ht = tf.expand_dims(h, 1)
+        score = tf.nn.tanh(tf.keras.layers.Dense(nh)(out) + tf.keras.layers.Dense(nh)(ht))
+        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(1)(score), axis=1)
+        out = attention_weights * out
+        out = tf.reduce_sum(out, axis=1)
+        network = tf.keras.Model(inputs=[x_input], outputs=[out])
+        return network
+    return network_fn
+
+@register("ablstm_256")
+def ablstm_256(nh=256, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        out, fh, fc, bh, bc = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(nh, return_state=True, return_sequences=True))(x_input)
+        h = tf.keras.layers.Concatenate()([fh, bh])
+        ht = tf.expand_dims(h, 1)
+        score = tf.nn.tanh(tf.keras.layers.Dense(nh)(out) + tf.keras.layers.Dense(nh)(ht))
+        attention_weights = tf.nn.softmax(tf.keras.layers.Dense(1)(score), axis=1)
+        out = attention_weights * out
+        out = tf.reduce_sum(out, axis=1)
         network = tf.keras.Model(inputs=[x_input], outputs=[out])
         return network
     return network_fn

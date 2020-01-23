@@ -34,7 +34,7 @@ def clean_dir(dir_name):
 
 def test_alg_on_env(env_class, algorithm, network, ne, ns, tt, ld='log'):
     if 'cnn' in network or 'lstm' in network:
-        k = 8
+        k = 4
         env_fns = [make_env(env_class, k) for _ in range(ne)]
     else:
         env_fns = [make_env(env_class) for _ in range(ne)]
@@ -97,6 +97,6 @@ if __name__ == '__main__':
     print('Total time steps: {0}'.format(total_timesteps))
 
     for network in networks:
-        if 'alstm' in network:
+        if 'ablstm' in network:
             print(network)
             test_alg_on_env(env_classes[0], algorithms[3], network, ne=n_envs, ns=n_steps, tt=total_timesteps)

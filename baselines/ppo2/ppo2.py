@@ -203,7 +203,7 @@ def learn(*, network, env, total_timesteps,
         lossvals = np.mean(mblossvals, axis=0)
         # End timer
         tnow = time.perf_counter()
-        print(update, trunner - tstart, tnow - trunner, tnow - tstart)
+        #print(update, trunner - tstart, tnow - trunner, tnow - tstart)
         # Calculate the fps (frame per second)
         fps = int(nbatch / (tnow - tstart))
         if update % log_interval == 0 or update == 1:
