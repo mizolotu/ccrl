@@ -175,6 +175,15 @@ def cnn4big(nh=1024, **conv_kwargs):
         return network
     return network_fn
 
+@register("lstm1_64")
+def slstm_64(nh=64, **conv_kwargs):
+    def network_fn(input_shape):
+        x_input = tf.keras.Input(shape=input_shape)
+        out, h, c = tf.keras.layers.LSTM(nh, return_state=True)(x_input)
+        network = tf.keras.Model(inputs=[x_input], outputs=[out])
+        return network
+    return network_fn
+
 @register("slstm_64")
 def slstm_64(nh=64, **conv_kwargs):
     def network_fn(input_shape):
