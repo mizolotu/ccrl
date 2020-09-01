@@ -190,7 +190,6 @@ def lstm(input_tensor, mask_tensor, cell_state_hidden, scope, n_hidden, init_sca
     cell_state, hidden = tf.split(axis=1, num_or_size_splits=2, value=cell_state_hidden)
 
     for idx, (_input, mask) in enumerate(zip(input_tensor, mask_tensor)):
-        print(idx, _input, mask)
         cell_state = cell_state * (1 - mask)
         hidden = hidden * (1 - mask)
         if layer_norm:

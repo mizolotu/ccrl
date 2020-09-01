@@ -13,7 +13,7 @@ from common.schedules import get_schedule_fn
 from common.tf_util import total_episode_reward_logger
 from common.math_util import safe_mean
 
-L2_WEIGHT = .1
+L2_WEIGHT = 0.0 # 0.1
 
 
 class PPO2(ActorCriticRLModel):
