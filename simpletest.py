@@ -16,7 +16,8 @@ def make_env():
 
 if __name__ == '__main__':
 
-    env_fns = [make_env() for _ in range(16)]
+    nenvs = 16
+    env_fns = [make_env() for _ in range(nenvs)]
     env = SubprocVecEnv(env_fns)
 
     # Optional: PPO2 requires a vectorized environment to run
@@ -24,7 +25,7 @@ if __name__ == '__main__':
 
     #model = A2C(MlpPolicy, env, verbose=1)
     #model = A2C(MemoryPolicy, env, verbose=1)
-    model = PPO2(MlpLstmPolicy, env, verbose=1)
+    model = PPO2(MlpPolicy, env, verbose=1)
     #model = ACKTR(LstmPolicy, env, verbose=1)
 
-    model.learn(total_timesteps=16000000)
+    model.learn(total_timesteps=nenvs*1000000)
