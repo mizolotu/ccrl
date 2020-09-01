@@ -10,8 +10,8 @@ from ppo2.ppo2 import PPO2
 from acktr.acktr import ACKTR
 
 def make_env():
-    #fn = lambda: PendulumEnv()
-    fn = lambda: Continuous_MountainCarEnv()
+    fn = lambda: PendulumEnv()
+    #fn = lambda: Continuous_MountainCarEnv()
     return fn
 
 if __name__ == '__main__':
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     #model = A2C(MlpPolicy, env, verbose=1)
     #model = A2C(MemoryPolicy, env, verbose=1)
-    model = PPO2(MlpPolicy, env, verbose=1)
+    model = PPO2(MlpLstmPolicy, env, verbose=1)
     #model = ACKTR(LstmPolicy, env, verbose=1)
 
     model.learn(total_timesteps=10000000)
