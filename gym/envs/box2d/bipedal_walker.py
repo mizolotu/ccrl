@@ -439,11 +439,11 @@ class BipedalWalker(gym.Env, EzPickle):
 
         done = False
         if self.game_over or pos[0] < 0:
-            reward = -100
+            reward = -100.0
             done   = True
         if pos[0] > (TERRAIN_LENGTH-TERRAIN_GRASS)*TERRAIN_STEP:
             done   = True
-        return np.array(state), reward, done, {}
+        return np.array(state), reward, done, {'r': reward}
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering

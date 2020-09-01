@@ -57,7 +57,7 @@ class PendulumEnv(gym.Env):
 
         self.state = np.array([newth, newthdot])
         r = - costs
-        return self._get_obs(), r, False, {'r': r, 'l': self.step_count}
+        return self._get_obs(), r, False, {'r': r}
 
     def reset(self):
         self.step_count = 0
