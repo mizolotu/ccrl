@@ -27,4 +27,4 @@ if __name__ == '__main__':
     model = PPO2(MlpLstmPolicy, env, verbose=1)
     #model = ACKTR(LstmPolicy, env, verbose=1)
 
-    model.learn(total_timesteps=10000000)
+    model.learn(total_timesteps=16000000)
