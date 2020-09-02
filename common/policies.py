@@ -390,14 +390,9 @@ class MemoryPolicy(RecurrentActorCriticPolicy):
 
             with tf.compat.v1.variable_scope("model", reuse=reuse):
 
-
-
                 extracted_features = tf.compat.v1.layers.flatten(self.obs_ph)
-                print(extracted_features, self.n_env, n_steps)
                 input_sequence = batch_to_seq(extracted_features, self.n_env, n_steps)
-                print(input_sequence)
                 masks = batch_to_seq(self.dones_ph, self.n_env, n_steps)
-                print(masks)
                 output, self.snew = mlpstack(input_sequence, masks, self.states_ph, 'mem1', n_hidden=64, layer_norm=layer_norm)
                 output = seq_to_batch(output)
                 value_fn = linear(output, 'vf', 1)

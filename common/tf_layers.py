@@ -149,7 +149,7 @@ def mlpstack(input_tensor, mask_tensor, state_hidden, scope, n_hidden, init_scal
         hidden = tf.matmul(cell_state, weight_x) + bias_x
         output.append(tf.matmul(hidden, weight_h) + bias_h)
 
-    return input_tensor, cell_state
+    return output, cell_state
 
 def lstm(input_tensor, mask_tensor, cell_state_hidden, scope, n_hidden, init_scale=1.0, layer_norm=False):
     """
