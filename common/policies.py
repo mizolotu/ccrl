@@ -375,7 +375,7 @@ class MemoryPolicy(RecurrentActorCriticPolicy):
 
     recurrent = True
 
-    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_mem=256, reuse=False, layers=None, net_arch=None, act_fun=tf.tanh, layer_norm=False, feature_extraction="mlp", **kwargs):
+    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, n_mem=64, reuse=False, layers=None, net_arch=None, act_fun=tf.tanh, layer_norm=False, feature_extraction="mlp", **kwargs):
 
         assert len(ob_space.shape) == 1
         nfeatures = ob_space.shape[0]

@@ -127,33 +127,27 @@ def linear(input_tensor, scope, n_hidden, *, init_scale=1.0, init_bias=0.0):
 
 def mlpstack(input_tensor, mask_tensor, state_hidden, scope, n_hidden, init_scale=1.0, layer_norm=False):
 
-    print('here')
-
     n_env, n_input = [v for v in input_tensor[0].get_shape()]
     _, state_dim = [v for v in state_hidden.get_shape()]
     n_mem = state_dim // n_input
 
-    print(state_hidden)
-
     with tf.compat.v1.variable_scope(scope):
         weight_x = tf.compat.v1.get_variable("wx", [state_dim, n_hidden], initializer=ortho_init(init_scale))
-        bias = tf.compat.v1.get_variable("b", [n_hidden], initializer=tf.compat.v1.constant_initializer(0.0))
+        bias_x = tf.compat.v1.get_variable("bx", [n_hidden], initializer=tf.compat.v1.constant_initializer(0.0))
+        weight_h = tf.compat.v1.get_variable("wh", [n_hidden, n_hidden], initializer=ortho_init(init_scale))
+        bias_h = tf.compat.v1.get_variable("bh", [n_hidden], initializer=tf.compat.v1.constant_initializer(0.0))
 
     output = []
 
     for idx, (_input, mask) in enumerate(zip(input_tensor, mask_tensor)):
-        print(idx, _input, mask)
         obs_reshaped = tf.reshape(_input, (n_env, 1, n_input))
         state_reshaped = tf.reshape(state_hidden, (n_env, n_mem, n_input))
         obs_plus_state_stack = tf.concat([obs_reshaped, state_reshaped], axis=1)
-        print(obs_plus_state_stack)
         stack_cut = tf.slice(obs_plus_state_stack, (0, 0, 0), (n_env, n_mem, n_input))
-        print(stack_cut)
         cell_state = tf.reshape(stack_cut, shape=(n_env, state_dim))
-        print(cell_state)
         cell_state = cell_state * (1 - mask)
-        output.append(tf.matmul(cell_state, weight_x) + bias)
-        print(output[idx])
+        hidden = tf.matmul(cell_state, weight_x) + bias_x
+        output.append(tf.matmul(hidden, weight_h) + bias_h)
 
     return input_tensor, cell_state
 
