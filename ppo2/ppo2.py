@@ -305,7 +305,7 @@ class PPO2(ActorCriticRLModel):
 
         return policy_loss, value_loss, policy_entropy, approxkl, clipfrac
 
-    def learn(self, total_timesteps, callback=None, log_interval=100, tb_log_name="PPO2",
+    def learn(self, total_timesteps, callback=None, log_interval=1, tb_log_name="PPO2",
               reset_num_timesteps=True):
         # Transform to callable if needed
         self.learning_rate = get_schedule_fn(self.learning_rate)

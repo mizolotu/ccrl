@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     #model = A2C(MlpPolicy, env, verbose=1)
     #model = A2C(MemoryPolicy, env, verbose=1)
-    model = PPO2(MlpLstmPolicy, env, verbose=1, nminibatches=nenvs)
+    model = PPO2(MlpPolicy, env, verbose=1, nminibatches=nenvs)
     #model = ACKTR(LstmPolicy, env, verbose=1)
 
     model.learn(total_timesteps=nenvs*1000000)
