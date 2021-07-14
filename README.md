@@ -1,20 +1,20 @@
 # State-of-art RL algorithms with tf2
 
-## Install
+## Install requirements:
 
 ```bash
 pip3 install -r requirements.txt 
 ```
 
-## Train
+## Train an RL agent:
 
 ```bash
 python3 train_agent.py -e <environment> -a <algorithm> 
 ```
 
-## Check results
+## Check the training results:
 
-Start tensorboard:
+Start tensorboard in the terminal:
 
 ```bash
 tensorboard --logdir <logdir>
