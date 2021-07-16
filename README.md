@@ -1,4 +1,4 @@
-# Crypto currency RL-based trader
+# Crypto-currency RL-based trading agents
 
 ## Project plan
 
