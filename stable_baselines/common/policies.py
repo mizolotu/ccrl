@@ -50,8 +50,7 @@ class BasePolicy(Model):
         raise NotImplementedError()
 
 
-def create_mlp(input_dim, output_dim, net_arch,
-               activation_fn=tf.nn.relu, squash_out=False):
+def create_mlp(input_dim, output_dim, net_arch, activation_fn=tf.nn.relu, squash_out=False):
     """
     Create a multi layer perceptron (MLP), which is
     a collection of fully-connected layers each followed by an activation function.
@@ -164,7 +163,7 @@ class MlpExtractor(Model):
         See above for details on its formatting.
     :param activation_fn: (tf.nn.activation) The activation function to use for the networks.
     """
-    def __init__(self, feature_dim, net_arch, activation_fn):
+    def __init__(self, input_dim, feature_dim, net_arch, activation_fn):
         super(MlpExtractor, self).__init__()
 
         shared_net, policy_net, value_net = [], [], []
@@ -173,11 +172,14 @@ class MlpExtractor(Model):
         last_layer_dim_shared = feature_dim
 
         # Iterate through the shared layers and build the shared parts of the network
+
         for idx, layer in enumerate(net_arch):
             if isinstance(layer, int):  # Check that this is a shared layer
                 layer_size = layer
+
                 # TODO: give layer a meaningful name
                 # shared_net.append(layers.Dense(layer_size, input_shape=(last_layer_dim_shared,), activation=activation_fn))
+
                 shared_net.append(layers.Dense(layer_size, activation=activation_fn))
                 last_layer_dim_shared = layer_size
             else:
@@ -195,6 +197,7 @@ class MlpExtractor(Model):
         last_layer_dim_vf = last_layer_dim_shared
 
         # Build the non-shared part of the network
+
         for idx, (pi_layer_size, vf_layer_size) in enumerate(zip_longest(policy_only_layers, value_only_layers)):
             if pi_layer_size is not None:
                 assert isinstance(pi_layer_size, int), "Error: net_arch[-1]['pi'] must only contain integers."
@@ -207,11 +210,13 @@ class MlpExtractor(Model):
                 last_layer_dim_vf = vf_layer_size
 
         # Save dim, used to create the distributions
+
         self.latent_dim_pi = last_layer_dim_pi
         self.latent_dim_vf = last_layer_dim_vf
 
         # Create networks
         # If the list of layers is empty, the network will just act as an Identity module
+
         self.shared_net = Sequential(shared_net)
         self.policy_net = Sequential(policy_net)
         self.value_net = Sequential(value_net)

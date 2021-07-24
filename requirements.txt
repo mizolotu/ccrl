@@ -3,3 +3,4 @@ tensorflow
 tensorflow-probability
 pandas
 gym
+ccxt

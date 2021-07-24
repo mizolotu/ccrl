@@ -64,8 +64,7 @@ class PPO(BaseRLModel):
                  policy_kwargs=None, verbose=0, seed=0,
                  _init_setup_model=True):
 
-        super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs,
-                                  verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
+        super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
 
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -101,10 +100,9 @@ class PPO(BaseRLModel):
         if self.n_envs == 1:
             self.set_random_seed(self.seed)
 
-        self.rollout_buffer = RolloutBuffer(self.n_steps, state_dim, action_dim,
-                                            gamma=self.gamma, gae_lambda=self.gae_lambda, n_envs=self.n_envs)
-        self.policy = self.policy_class(self.observation_space, self.action_space,
-                                        self.learning_rate, **self.policy_kwargs)
+        self.rollout_buffer = RolloutBuffer(self.n_steps, state_dim, action_dim, gamma=self.gamma, gae_lambda=self.gae_lambda, n_envs=self.n_envs)
+        self.policy = self.policy_class(self.observation_space, self.action_space, self.learning_rate, **self.policy_kwargs)
+        self.policy.summary()
 
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
@@ -246,8 +244,10 @@ class PPO(BaseRLModel):
         if hasattr(self.policy, 'log_std'):
             logger.logkv("std", tf.exp(self.policy.log_std).numpy().mean())
 
-    def learn(self, total_timesteps, callback=None, log_interval=1,
-              eval_env=None, eval_freq=-1, n_eval_episodes=5, tb_log_name="PPO", reset_num_timesteps=True):
+    def save(self, savepath):
+        self.policy.save(savepath)
+
+    def learn(self, total_timesteps, callback=None, log_interval=1, eval_env=None, eval_freq=-1, n_eval_episodes=5, tb_log_name="PPO", reset_num_timesteps=True):
 
         timesteps_since_eval, iteration, evaluations, obs, eval_env = self._setup_learn(eval_env)
 
@@ -281,10 +281,14 @@ class PPO(BaseRLModel):
 
             self.train(self.n_epochs, batch_size=self.batch_size)
 
+            self.save('checkpoint.zip')
+
             # Evaluate the agent
-            timesteps_since_eval = self._eval_policy(eval_freq, eval_env, n_eval_episodes,
-                                                     timesteps_since_eval, deterministic=True)
+
+            timesteps_since_eval = self._eval_policy(eval_freq, eval_env, n_eval_episodes, timesteps_since_eval, deterministic=True)
+
             # For tensorboard integration
+
             if self.tb_writer is not None:
                 with self.tb_writer.as_default():
                     if len(self.ep_reward_buffer) > 0:
