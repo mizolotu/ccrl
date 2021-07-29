@@ -6,6 +6,7 @@ import gym
 from gym import spaces
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 
 from stable_baselines.common.base_class import BaseRLModel
 from stable_baselines.common.buffers import RolloutBuffer
@@ -64,7 +65,7 @@ class PPO(BaseRLModel):
                  ent_coef=0.0, vf_coef=0.5, max_grad_norm=0.5,
                  target_kl=None, tensorboard_log=None, create_eval_env=False,
                  policy_kwargs=None, verbose=0, seed=0,
-                 _init_setup_model=True, loadpath=None):
+                 _init_setup_model=True, loadpath=None, logpath=None):
 
         super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
 
@@ -84,8 +85,37 @@ class PPO(BaseRLModel):
         self.tensorboard_log = tensorboard_log
         self.tb_writer = None
 
+        self.iteration_start = 0
+        self.time_elapsed_start = 0
+        self.num_timesteps_start = 0
+
         if _init_setup_model:
             self._setup_model(loadpath)
+
+        if logpath is not None:
+
+            p = None
+            if loadpath is not None:
+                try:
+                    fname = osp.join(logpath, 'progress.csv')
+                    p = pd.read_csv(fname, delimiter=',', dtype=float)
+                except:
+                    pass
+
+            format_strs = os.getenv('', 'stdout,log,csv').split(',')
+            logger.configure(os.path.abspath(logpath), format_strs)
+
+            if p is not None:
+                print('here')
+                keys = p.keys()
+                vals = p.values
+                self.iteration_start = p['iterations'].values[-1]
+                self.num_timesteps_start = p['total timesteps'].values[-1]
+                self.time_elapsed_start = p['time_elapsed'].values[-1]
+                for i in range(vals.shape[0]):
+                    for j in range(len(keys)):
+                        logger.logkv(keys[j], vals[i, j])
+                    logger.dumpkvs()
 
     def _setup_model(self, loadpath=None):
 
@@ -307,6 +337,7 @@ class PPO(BaseRLModel):
     def learn(self, total_timesteps, callback=None, log_interval=1, eval_env=None, eval_freq=-1, n_eval_episodes=5, tb_log_name="PPO", reset_num_timesteps=True):
 
         timesteps_since_eval, iteration, evaluations, obs, eval_env = self._setup_learn(eval_env)
+        iteration += self.iteration_start
 
         if self.tensorboard_log is not None:
             self.tb_writer = tf.summary.create_file_writer(os.path.join(self.tensorboard_log, f'{tb_log_name}_{time.time()}'))
@@ -327,14 +358,14 @@ class PPO(BaseRLModel):
             # Display training infos
 
             if self.verbose >= 1 and log_interval is not None and iteration % log_interval == 0:
-                fps = int(self.num_timesteps / (time.time() - self.start_time))
-                logger.logkv("iterations", iteration)
                 if len(self.ep_reward_buffer) > 0:
+                    fps = int(self.num_timesteps / (time.time() - self.start_time))
+                    logger.logkv("iterations", iteration)
                     logger.logkv('ep_rew_mean', self.safe_mean(self.ep_reward_buffer))
-                logger.logkv("fps", fps)
-                logger.logkv('time_elapsed', int(time.time() - self.start_time))
-                logger.logkv("total timesteps", self.num_timesteps)
-                logger.dumpkvs()
+                    logger.logkv("fps", fps)
+                    logger.logkv('time_elapsed', int(time.time() - self.start_time + self.time_elapsed_start))
+                    logger.logkv("total timesteps", self.num_timesteps + self.num_timesteps_start)
+                    logger.dumpkvs()
 
             self.train(self.n_epochs, batch_size=self.batch_size)
 

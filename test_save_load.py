@@ -42,7 +42,8 @@ if __name__ == '__main__':
 
         # create and train model
 
-        model = ppo(MlpPolicy, env, n_steps=64, batch_size=64, ent_coef=0.01, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]))
+        logdir = osp.join(PROGRESS_DIR, env_class.__name__, alg.__name__)
+        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, ent_coef=0.01, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), logpath=logdir)
         model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
 
         # save and delete model
@@ -53,5 +54,5 @@ if __name__ == '__main__':
 
         # load model
 
-        model = ppo(MlpPolicy, env, tensorboard_log=TENSORBOARD_DIR, loadpath=modeldir)
+        model = ppo(MlpPolicy, env, tensorboard_log=TENSORBOARD_DIR, loadpath=modeldir, logpath=logdir)
         model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
