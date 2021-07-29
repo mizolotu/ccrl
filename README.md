@@ -4,7 +4,7 @@
 
 1. Find a working implementation of PPO for continuous action space in tf2 - <b>Done!</b>
 2. Test the implementation with an OpenAI gym environment - <b>Done!</b>
-3. Add save/load mechanism to the PPO implementation - <b>In progress...</b> 
+3. Add save/load mechanism to the PPO implementation - <b>Done!</b> 
 4. Collect historical data for several cryptocurrencies from different exchanges using ccxt - <b>In progress...</b>
 5. Create an offline environment using the historical data to train an agent 
 6. Train the agent in the resulting environment, check different hyperparameters
