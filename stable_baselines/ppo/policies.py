@@ -76,8 +76,10 @@ class PPOPolicy(BasePolicy):
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate(1), epsilon=self.adam_epsilon)
 
     def save(self, path):
-        for var in self.trainable_variables:
-            print(var.name)
+        self.save_weights(path)
+
+    def load(self, path):
+        self.load_weights(path)
 
     @tf.function
     def call(self, obs, deterministic=False):

@@ -1,5 +1,6 @@
 import os
 import time
+import os.path as osp
 
 import gym
 from gym import spaces
@@ -11,6 +12,7 @@ from stable_baselines.common.buffers import RolloutBuffer
 from stable_baselines.common.utils import explained_variance, get_schedule_fn
 from stable_baselines.common import logger
 from stable_baselines.ppo.policies import PPOPolicy
+from stable_baselines.common.save_util import data_to_json, json_to_data
 
 
 class PPO(BaseRLModel):
@@ -62,7 +64,7 @@ class PPO(BaseRLModel):
                  ent_coef=0.0, vf_coef=0.5, max_grad_norm=0.5,
                  target_kl=None, tensorboard_log=None, create_eval_env=False,
                  policy_kwargs=None, verbose=0, seed=0,
-                 _init_setup_model=True):
+                 _init_setup_model=True, loadpath=None):
 
         super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
 
@@ -83,9 +85,10 @@ class PPO(BaseRLModel):
         self.tb_writer = None
 
         if _init_setup_model:
-            self._setup_model()
+            self._setup_model(loadpath)
 
-    def _setup_model(self):
+    def _setup_model(self, loadpath=None):
+
         self._setup_learning_rate()
         # TODO: preprocessing: one hot vector for obs discrete
         state_dim = self.observation_space.shape[0]
@@ -100,9 +103,17 @@ class PPO(BaseRLModel):
         if self.n_envs == 1:
             self.set_random_seed(self.seed)
 
-        self.rollout_buffer = RolloutBuffer(self.n_steps, state_dim, action_dim, gamma=self.gamma, gae_lambda=self.gae_lambda, n_envs=self.n_envs)
+        if loadpath is not None:
+            data, w_path = self.load(loadpath)
+            self.__dict__.update(data)
+
         self.policy = self.policy_class(self.observation_space, self.action_space, self.learning_rate, **self.policy_kwargs)
         self.policy.summary()
+
+        if loadpath is not None:
+            self.policy.load(w_path)
+
+        self.rollout_buffer = RolloutBuffer(self.n_steps, state_dim, action_dim, gamma=self.gamma, gae_lambda=self.gae_lambda, n_envs=self.n_envs)
 
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
@@ -244,15 +255,61 @@ class PPO(BaseRLModel):
         if hasattr(self.policy, 'log_std'):
             logger.logkv("std", tf.exp(self.policy.log_std).numpy().mean())
 
-    def save(self, savepath):
-        self.policy.save(savepath)
+    def save(self, path):
+
+        # save weights
+
+        w_path = osp.join(path, 'model')
+        self.policy.save(w_path)
+
+        # save data
+
+        data = {
+            "gamma": self.gamma,
+            "n_steps": self.n_steps,
+            "vf_coef": self.vf_coef,
+            "ent_coef": self.ent_coef,
+            "max_grad_norm": self.max_grad_norm,
+            "learning_rate": self.learning_rate,
+            "gae_lambda": self.gae_lambda,
+            "batch_size": self.batch_size,
+            "n_epochs": self.n_epochs,
+            "clip_range": self.clip_range,
+            "clip_range_vf": self.clip_range_vf,
+            "verbose": self.verbose,
+            "policy_class": self.policy_class,
+            "observation_space": self.observation_space,
+            "action_space": self.action_space,
+            "n_envs": self.n_envs,
+            "seed": self.seed,
+            "policy_kwargs": self.policy_kwargs
+        }
+        d_path = osp.join(path, 'params')
+        serialized_data = data_to_json(data)
+        with open(d_path, 'w') as f:
+            f.write(serialized_data)
+
+    def load(self, path):
+
+        # load data
+
+        d_path = osp.join(path, 'params')
+        with open(d_path, 'r') as f:
+            json_data = f.read()
+        data = json_to_data(json_data)
+
+        #  weights
+
+        w_path = osp.join(path, 'model')
+
+        return data, w_path
 
     def learn(self, total_timesteps, callback=None, log_interval=1, eval_env=None, eval_freq=-1, n_eval_episodes=5, tb_log_name="PPO", reset_num_timesteps=True):
 
         timesteps_since_eval, iteration, evaluations, obs, eval_env = self._setup_learn(eval_env)
 
         if self.tensorboard_log is not None:
-            self.tb_writer = tf.summary.create_file_writer(os.path.join(self.tensorboard_log, tb_log_name))
+            self.tb_writer = tf.summary.create_file_writer(os.path.join(self.tensorboard_log, f'{tb_log_name}_{time.time()}'))
 
         while self.num_timesteps < total_timesteps:
 
@@ -280,8 +337,6 @@ class PPO(BaseRLModel):
                 logger.dumpkvs()
 
             self.train(self.n_epochs, batch_size=self.batch_size)
-
-            self.save('checkpoint.zip')
 
             # Evaluate the agent
 
