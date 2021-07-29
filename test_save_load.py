@@ -40,19 +40,28 @@ if __name__ == '__main__':
         env_fns = [make_env(env_class, seed) for seed in range(nenvs)]
         env = SubprocVecEnv(env_fns)
 
-        # create and train model
-
-        logdir = osp.join(PROGRESS_DIR, env_class.__name__, alg.__name__)
-        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, ent_coef=0.01, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), logpath=logdir)
-        model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
-
-        # save and delete model
+        # clean model dir
 
         modeldir = osp.join(MODEL_DIR, env_class.__name__, alg.__name__)
-        model.save(modeldir)
+        if osp.isdir(modeldir):
+            shutil.rmtree(modeldir)
+
+        # clean progress dir
+
+        logdir = osp.join(PROGRESS_DIR, env_class.__name__, alg.__name__)
+        if osp.isdir(logdir):
+            shutil.rmtree(logdir)
+
+        # create and train model
+
+        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
+        model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
+
+        # delete model
+
         del model
 
-        # load model
+        # load model and continue training
 
-        model = ppo(MlpPolicy, env, tensorboard_log=TENSORBOARD_DIR, loadpath=modeldir, logpath=logdir)
+        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
         model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)

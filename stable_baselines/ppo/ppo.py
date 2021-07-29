@@ -62,10 +62,10 @@ class PPO(BaseRLModel):
     def __init__(self, policy, env, learning_rate=3e-4,
                  n_steps=2048, batch_size=64, n_epochs=10,
                  gamma=0.99, gae_lambda=0.95, clip_range=0.2, clip_range_vf=None,
-                 ent_coef=0.0, vf_coef=0.5, max_grad_norm=0.5,
+                 ent_coef=0.01, vf_coef=0.5, max_grad_norm=0.5,
                  target_kl=None, tensorboard_log=None, create_eval_env=False,
                  policy_kwargs=None, verbose=0, seed=0,
-                 _init_setup_model=True, loadpath=None, logpath=None):
+                 _init_setup_model=True, modelpath=None, logpath=None):
 
         super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
 
@@ -89,13 +89,15 @@ class PPO(BaseRLModel):
         self.time_elapsed_start = 0
         self.num_timesteps_start = 0
 
-        if _init_setup_model:
-            self._setup_model(loadpath)
+        self.modelpath = modelpath
+
+        params_loaded, policy_loaded = self._setup_model(modelpath)
+        print(params_loaded, policy_loaded)
 
         if logpath is not None:
 
             p = None
-            if loadpath is not None:
+            if modelpath is not None and params_loaded and policy_loaded:
                 try:
                     fname = osp.join(logpath, 'progress.csv')
                     p = pd.read_csv(fname, delimiter=',', dtype=float)
@@ -106,7 +108,6 @@ class PPO(BaseRLModel):
             logger.configure(os.path.abspath(logpath), format_strs)
 
             if p is not None:
-                print('here')
                 keys = p.keys()
                 vals = p.values
                 self.iteration_start = p['iterations'].values[-1]
@@ -117,7 +118,7 @@ class PPO(BaseRLModel):
                         logger.logkv(keys[j], vals[i, j])
                     logger.dumpkvs()
 
-    def _setup_model(self, loadpath=None):
+    def _setup_model(self, modelpath=None):
 
         self._setup_learning_rate()
         # TODO: preprocessing: one hot vector for obs discrete
@@ -133,21 +134,33 @@ class PPO(BaseRLModel):
         if self.n_envs == 1:
             self.set_random_seed(self.seed)
 
-        if loadpath is not None:
-            data, w_path = self.load(loadpath)
-            self.__dict__.update(data)
+        if modelpath is not None:
+            try:
+                data, w_path = self.load(modelpath)
+                self.__dict__.update(data)
+                params_loaded = True
+            except Exception as e:
+                print(e)
+                params_loaded = False
 
         self.policy = self.policy_class(self.observation_space, self.action_space, self.learning_rate, **self.policy_kwargs)
         self.policy.summary()
 
-        if loadpath is not None:
-            self.policy.load(w_path)
+        if modelpath is not None:
+            try:
+                self.policy.load(w_path)
+                policy_loaded = True
+            except Exception as e:
+                print(e)
+                policy_loaded = False
 
         self.rollout_buffer = RolloutBuffer(self.n_steps, state_dim, action_dim, gamma=self.gamma, gae_lambda=self.gae_lambda, n_envs=self.n_envs)
 
         self.clip_range = get_schedule_fn(self.clip_range)
         if self.clip_range_vf is not None:
             self.clip_range_vf = get_schedule_fn(self.clip_range_vf)
+
+        return params_loaded, policy_loaded
 
     def predict(self, observation, state=None, mask=None, deterministic=False):
         """
@@ -164,8 +177,7 @@ class PPO(BaseRLModel):
             clipped_actions = np.clip(clipped_actions, self.action_space.low, self.action_space.high)
         return clipped_actions
 
-    def collect_rollouts(self, env, rollout_buffer, n_rollout_steps=256, callback=None,
-                         obs=None):
+    def collect_rollouts(self, env, rollout_buffer, n_rollout_steps=256, callback=None, obs=None):
 
         n_steps = 0
         rollout_buffer.reset()
@@ -366,6 +378,8 @@ class PPO(BaseRLModel):
                     logger.logkv('time_elapsed', int(time.time() - self.start_time + self.time_elapsed_start))
                     logger.logkv("total timesteps", self.num_timesteps + self.num_timesteps_start)
                     logger.dumpkvs()
+                    if iteration > self.iteration_start + 1:
+                        self.save(self.modelpath)
 
             self.train(self.n_epochs, batch_size=self.batch_size)
 
