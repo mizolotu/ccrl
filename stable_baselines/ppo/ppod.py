@@ -15,8 +15,9 @@ from stable_baselines.common import logger
 from stable_baselines.ppo.policies import PPOPolicy
 from stable_baselines.common.save_util import data_to_json, json_to_data
 
+from collections import deque
 
-class PPO(BaseRLModel):
+class PPOD(BaseRLModel):
     """
     Proximal Policy Optimization algorithm (PPO) (clip version)
 
@@ -67,7 +68,7 @@ class PPO(BaseRLModel):
                  policy_kwargs=None, verbose=0, seed=0,
                  _init_setup_model=True, modelpath=None, logpath=None):
 
-        super(PPO, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
+        super(PPOD, self).__init__(policy, env, PPOPolicy, policy_kwargs=policy_kwargs, verbose=verbose, create_eval_env=create_eval_env, support_multi_env=True, seed=seed)
 
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -184,7 +185,7 @@ class PPO(BaseRLModel):
         rewards_ = []
 
         while n_steps < n_rollout_steps:
-            actions, values, log_probs = self.policy.call(obs)
+            actions, values, log_probs, _ = self.policy.call(obs)
             actions = actions.numpy()
 
             # Rescale and perform action
@@ -296,6 +297,79 @@ class PPO(BaseRLModel):
         logger.logkv("value_loss", value_loss.numpy())
         if hasattr(self.policy, 'log_std'):
             logger.logkv("std", tf.exp(self.policy.log_std).numpy().mean())
+
+    def pretrain(self, observations, expert_actions, nepochs=10000, nbatchesperepoch=10, val_split=0.25, patience=100):
+
+        n = observations.shape[0]
+        inds = np.arange(n)
+        inds_val, inds_tr = np.split(inds, [int(val_split * n)])
+        n_tr = len(inds_tr)
+        n_val = len(inds_val)
+        val_losses = deque(maxlen=10)
+        patience_count = 0
+        val_loss_min = +np.inf
+        best_weights = None
+
+        for epoch in range(nepochs):
+
+            train_loss = 0.0
+
+            for _ in range(nbatchesperepoch):
+
+                idx = inds_tr[np.random.choice(n_tr, self.batch_size)]
+                obs = observations[idx, :]
+                if isinstance(self.action_space, spaces.Discrete):
+                    actions_ = expert_actions[idx]
+                elif isinstance(self.action_space, spaces.Box):
+                    actions_ = expert_actions[idx, :]
+
+                with tf.GradientTape() as tape:
+                    tape.watch(self.policy.trainable_variables)
+                    actions, values, log_probs, action_logits = self.policy.call(obs)
+                    if isinstance(self.action_space, spaces.Discrete):
+                        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=actions_, logits=action_logits))
+                    elif isinstance(self.action_space, spaces.Box):
+                        loss = tf.reduce_mean(tf.square(actions - actions_))
+                train_loss += loss
+
+                # Optimization step
+
+                gradients = tape.gradient(loss, self.policy.trainable_variables)
+
+                # Clip grad norm
+                # gradients = tf.clip_by_norm(gradients, self.max_grad_norm)
+                self.policy.optimizer.apply_gradients(zip(gradients, self.policy.trainable_variables))
+
+            val_loss = 0.0
+
+            for _ in range(nbatchesperepoch):
+
+                idx = inds_val[np.random.choice(n_val, self.batch_size)]
+                obs = observations[idx, :]
+                if isinstance(self.action_space, spaces.Discrete):
+                    actions_ = expert_actions[idx]
+                elif isinstance(self.action_space, spaces.Box):
+                    actions_ = expert_actions[idx, :]
+                actions, values, log_probs, action_logits = self.policy.call(obs)
+                if isinstance(self.action_space, spaces.Discrete):
+                    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=actions_, logits=action_logits))
+                elif isinstance(self.action_space, spaces.Box):
+                    loss = tf.reduce_mean(tf.square(actions - actions_))
+                val_loss += loss
+
+            val_losses.append(val_loss / nbatchesperepoch)
+
+            print(f'At epoch {epoch + 1}/{nepochs}, train loss is {train_loss / nbatchesperepoch}, validation loss is {val_loss / nbatchesperepoch}, patience is {patience_count + 1}/{patience}')
+
+            if np.mean(val_losses) < val_loss_min:
+                val_loss_min = np.mean(val_losses)
+                patience_count = 0
+                best_weights = self.policy.get_weights()
+            else:
+                patience_count += 1
+                if patience_count >= patience:
+                    self.policy.set_weights(best_weights)
+                    break
 
     def save(self, path):
 

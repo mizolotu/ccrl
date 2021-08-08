@@ -85,9 +85,9 @@ class PPOPolicy(BasePolicy):
     def call(self, obs, deterministic=False):
         latent_pi, latent_vf = self._get_latent(obs)
         value = self.value_net(latent_vf)
-        action, action_distribution = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
+        action_logits, action, action_distribution = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
         log_prob = action_distribution.log_prob(action)
-        return action, value, log_prob
+        return action, value, log_prob, action_logits
 
     def _get_latent(self, obs):
         features = self.features_extractor(obs)
@@ -98,15 +98,15 @@ class PPOPolicy(BasePolicy):
         mean_actions = self.action_net(latent_pi)
 
         if isinstance(self.action_dist, DiagGaussianDistribution):
-            return self.action_dist.proba_distribution(mean_actions, self.log_std, deterministic=deterministic)
+            return mean_actions, *self.action_dist.proba_distribution(mean_actions, self.log_std, deterministic=deterministic)
 
         elif isinstance(self.action_dist, CategoricalDistribution):
             # Here mean_actions are the logits before the softmax
-            return self.action_dist.proba_distribution(mean_actions, deterministic=deterministic)
+            return mean_actions, *self.action_dist.proba_distribution(mean_actions, deterministic=deterministic)
 
     def actor_forward(self, obs, deterministic=False):
         latent_pi, _ = self._get_latent(obs)
-        action, _ = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
+        _, action, _ = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
         return tf.stop_gradient(action).numpy()
 
     @tf.function
@@ -122,7 +122,7 @@ class PPOPolicy(BasePolicy):
             and entropy of the action distribution.
         """
         latent_pi, latent_vf = self._get_latent(obs)
-        _, action_distribution = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
+        _, _, action_distribution = self._get_action_dist_from_latent(latent_pi, deterministic=deterministic)
         log_prob = action_distribution.log_prob(action)
         value = self.value_net(latent_vf)
         return value, log_prob, action_distribution.entropy()

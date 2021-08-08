@@ -9,8 +9,7 @@ from stable_baselines.common.utils import set_random_seed
 
 from config import *
 
-def make_env(env_class, seed):
-    #fn = lambda: env_class(seed)
+def make_env(env_class):
     fn = lambda: env_class()
     return fn
 
@@ -20,13 +19,13 @@ if __name__ == '__main__':
 
     env_classes = [LunarLanderContinuous, LunarLander]
     nenvs = 4
-    timesteps = nenvs * int(1e4)
+    timesteps = nenvs * int(1e5)
     set_random_seed(seed=0)
     alg = ppo
 
     # clean tensorboard test dir
 
-    test_tensorboard_log_dir = 'test'
+    test_tensorboard_log_dir = 'test_save_load'
     if osp.isdir(TENSORBOARD_DIR):
         for subdir in os.listdir(TENSORBOARD_DIR):
             dpath = osp.join(TENSORBOARD_DIR, subdir)
@@ -37,24 +36,24 @@ if __name__ == '__main__':
 
         # create env
 
-        env_fns = [make_env(env_class, seed) for seed in range(nenvs)]
+        env_fns = [make_env(env_class) for _ in range(nenvs)]
         env = SubprocVecEnv(env_fns)
 
         # clean model dir
 
-        modeldir = osp.join(MODEL_DIR, env_class.__name__, alg.__name__)
+        modeldir = osp.join(MODEL_DIR, env_class.__name__, alg.__name__, MlpPolicy.__name__)
         if osp.isdir(modeldir):
             shutil.rmtree(modeldir)
 
         # clean progress dir
 
-        logdir = osp.join(PROGRESS_DIR, env_class.__name__, alg.__name__)
+        logdir = osp.join(PROGRESS_DIR, env_class.__name__, alg.__name__, MlpPolicy.__name__)
         if osp.isdir(logdir):
             shutil.rmtree(logdir)
 
         # create and train model
 
-        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
+        model = alg(MlpPolicy, env, n_steps=256, batch_size=256, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
         model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
 
         # delete model
@@ -63,5 +62,5 @@ if __name__ == '__main__':
 
         # load model and continue training
 
-        model = ppo(MlpPolicy, env, n_steps=512, batch_size=512, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
+        model = alg(MlpPolicy, env, n_steps=256, batch_size=256, tensorboard_log=TENSORBOARD_DIR, verbose=1, policy_kwargs=dict(net_arch = [256, dict(pi=[256], vf=[256])]), modelpath=modeldir, logpath=logdir)
         model.learn(total_timesteps=timesteps, log_interval=1, tb_log_name=test_tensorboard_log_dir)
